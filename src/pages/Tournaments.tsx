@@ -2,37 +2,38 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store';
 import { Trophy, Plus, Search, Calendar, MapPin, Eye } from 'lucide-react';
+import { useGameNames } from '../utils/gameHelpers';
 
 export default function Tournaments() {
-  const { tournaments, currentUser, sports, createTournament, updateTournament, teams, submitTeamEventRegistration } = useStore();
+  const { tournaments, currentUser, games, createTournament, updateTournament, teams, submitTeamEventRegistration } = useStore();
   const navigate = useNavigate();
   const [showCreate, setShowCreate] = useState(false);
   const [search, setSearch] = useState('');
-  const [form, setForm] = useState({ name: '', description: '', sports: [] as string[], startDate: '', endDate: '', registrationDeadline: '', location: '', pointsForWin: 3, pointsForDraw: 1, pointsForLoss: 0, registrationFee: 100, teamRegistrationFee: 0 });
+  const [form, setForm] = useState({ name: '', description: '', games: [] as string[], startDate: '', endDate: '', registrationDeadline: '', location: '', pointsForWin: 3, pointsForDraw: 1, pointsForLoss: 0 });
 
-  const filtered = tournaments.filter(t => t.name.toLowerCase().includes(search.toLowerCase()) || (t.sports || []).some(s => s.toLowerCase().includes(search.toLowerCase())));
+  const filtered = tournaments.filter(t => {
+    const gameNames = (t.games || []).map(gid => games.find(g => g.id === gid)?.name || gid).join(' ').toLowerCase();
+    return t.name.toLowerCase().includes(search.toLowerCase()) || gameNames.includes(search.toLowerCase());
+  });
 
   const handleCreate = () => {
-    if (!form.name || form.sports.length === 0) return;
+    if (!form.name || form.games.length === 0) return;
     createTournament({ ...form, createdBy: currentUser?.id || '', status: 'draft' });
     setShowCreate(false);
-    setForm({ name: '', description: '', sports: [], startDate: '', endDate: '', registrationDeadline: '', location: '', pointsForWin: 3, pointsForDraw: 1, pointsForLoss: 0, registrationFee: 100, teamRegistrationFee: 0 });
+    setForm({ name: '', description: '', games: [], startDate: '', endDate: '', registrationDeadline: '', location: '', pointsForWin: 3, pointsForDraw: 1, pointsForLoss: 0 });
   };
 
-  const toggleSport = (sportName: string) => {
+  const toggleGame = (gameId: string) => {
     setForm(f => ({
       ...f,
-      sports: f.sports.includes(sportName) ? f.sports.filter(s => s !== sportName) : [...f.sports, sportName]
+      games: f.games.includes(gameId) ? f.games.filter(g => g !== gameId) : [...f.games, gameId]
     }));
   };
 
   const statusColors: Record<string, string> = {
-    draft: 'bg-gray-100 text-gray-700',
-    registration_open: 'bg-blue-100 text-blue-700',
-    registration_closed: 'bg-yellow-100 text-yellow-700',
-    ongoing: 'bg-green-100 text-green-700',
-    completed: 'bg-purple-100 text-purple-700',
-    cancelled: 'bg-red-100 text-red-700',
+    draft: 'bg-gray-100 text-gray-700', registration_open: 'bg-blue-100 text-blue-700',
+    registration_closed: 'bg-yellow-100 text-yellow-700', ongoing: 'bg-green-100 text-green-700',
+    completed: 'bg-purple-100 text-purple-700', cancelled: 'bg-red-100 text-red-700',
     archived: 'bg-gray-200 text-gray-600',
   };
 
@@ -69,21 +70,19 @@ export default function Tournaments() {
             <input type="date" value={form.endDate} onChange={e => setForm({...form, endDate: e.target.value})}
               className="px-3 py-2 border border-gray-300 rounded-lg" />
             <input type="date" value={form.registrationDeadline} onChange={e => setForm({...form, registrationDeadline: e.target.value})}
-              className="px-3 py-2 border border-gray-300 rounded-lg" placeholder="Registration Deadline" />
-            <input type="number" placeholder="Registration Fee (₹)" value={form.registrationFee} onChange={e => setForm({...form, registrationFee: +e.target.value})}
               className="px-3 py-2 border border-gray-300 rounded-lg" />
             <textarea placeholder="Description" value={form.description} onChange={e => setForm({...form, description: e.target.value})}
               className="px-3 py-2 border border-gray-300 rounded-lg md:col-span-2" rows={2} />
           </div>
           <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Select Sports *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Select Games *</label>
             <div className="flex flex-wrap gap-2">
-              {sports.map(s => (
-                <button key={s.id} type="button" onClick={() => toggleSport(s.name)}
+              {games.filter(g => g.isActive).map(g => (
+                <button key={g.id} type="button" onClick={() => toggleGame(g.id)}
                   className={`px-3 py-1 rounded-full text-sm border-2 transition-all ${
-                    form.sports.includes(s.name) ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                    form.games.includes(g.id) ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'
                   }`}>
-                  {form.sports.includes(s.name) ? '✓ ' : ''}{s.name}
+                  {form.games.includes(g.id) ? '✓ ' : ''}{g.icon} {g.name}
                 </button>
               ))}
             </div>
@@ -96,57 +95,60 @@ export default function Tournaments() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.map(t => (
-          <div key={t.id} onClick={() => navigate(`/tournament/${t.id}`)}
-            className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <h3 className="font-semibold text-lg">{t.name}</h3>
-                <p className="text-sm text-gray-500">{(t.sports || []).join(', ')}</p>
+        {filtered.map(t => {
+          const gameNames = (t.games || []).map(gid => games.find(g => g.id === gid)?.name || gid);
+          return (
+            <div key={t.id} onClick={() => navigate(`/tournament/${t.id}`)}
+              className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <h3 className="font-semibold text-lg">{t.name}</h3>
+                  <p className="text-sm text-gray-500">{gameNames.join(', ')}</p>
+                </div>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[t.status] || 'bg-gray-100'}`}>
+                  {t.status.replace('_', ' ')}
+                </span>
               </div>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[t.status] || 'bg-gray-100'}`}>
-                {t.status.replace('_', ' ')}
-              </span>
-            </div>
-            <p className="text-sm text-gray-600 mb-3 line-clamp-2">{t.description}</p>
-            <div className="flex items-center gap-4 text-xs text-gray-400 mb-3">
-              <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{t.startDate || 'TBD'}</span>
-              <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{t.location || 'TBD'}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="text-xs text-gray-500">
-                <span>{(t.teams || []).length} teams</span> • <span>Fee: ₹{t.registrationFee}</span>
+              <p className="text-sm text-gray-600 mb-3 line-clamp-2">{t.description}</p>
+              <div className="flex items-center gap-4 text-xs text-gray-400 mb-3">
+                <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{t.startDate || 'TBD'}</span>
+                <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{t.location || 'TBD'}</span>
               </div>
-              <div className="flex items-center gap-2">
-                {currentUser?.role === 'admin' && (
-                  <select value={t.status} onClick={e => e.stopPropagation()} onChange={e => updateTournament(t.id, { status: e.target.value as any })}
-                    className="text-xs border rounded px-2 py-1">
-                    <option value="draft">Draft</option>
-                    <option value="registration_open">Reg Open</option>
-                    <option value="registration_closed">Reg Closed</option>
-                    <option value="ongoing">Ongoing</option>
-                    <option value="completed">Completed</option>
-                    <option value="archived">Archived</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
-                )}
-                {(currentUser?.role === 'team_owner') && t.status === 'registration_open' && (
-                  <button onClick={(e) => {
-                    e.stopPropagation();
-                    const myTeam = teams.find(tm => tm.ownerId === currentUser.id);
-                    if (myTeam && !(t.teams || []).includes(myTeam.id)) {
-                      const sport = (t.sports || [])[0];
-                      if (sport) submitTeamEventRegistration(myTeam.id, t.id, sport);
-                    }
-                  }} className="text-xs px-3 py-1 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-                    Register
-                  </button>
-                )}
-                <Eye className="w-4 h-4 text-gray-400" />
+              <div className="flex items-center justify-between">
+                <div className="text-xs text-gray-500">
+                  <span>{(t.teams || []).length} teams</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {currentUser?.role === 'admin' && (
+                    <select value={t.status} onClick={e => e.stopPropagation()} onChange={e => updateTournament(t.id, { status: e.target.value as any })}
+                      className="text-xs border rounded px-2 py-1">
+                      <option value="draft">Draft</option>
+                      <option value="registration_open">Reg Open</option>
+                      <option value="registration_closed">Reg Closed</option>
+                      <option value="ongoing">Ongoing</option>
+                      <option value="completed">Completed</option>
+                      <option value="archived">Archived</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  )}
+                  {(currentUser?.role === 'team_owner') && t.status === 'registration_open' && (
+                    <button onClick={(e) => {
+                      e.stopPropagation();
+                      const myTeam = teams.find(tm => tm.ownerId === currentUser.id);
+                      if (myTeam && !(t.teams || []).includes(myTeam.id)) {
+                        const gameId = (t.games || [])[0];
+                        if (gameId) submitTeamEventRegistration(myTeam.id, t.id, gameId);
+                      }
+                    }} className="text-xs px-3 py-1 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                      Register
+                    </button>
+                  )}
+                  <Eye className="w-4 h-4 text-gray-400" />
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {filtered.length === 0 && (
