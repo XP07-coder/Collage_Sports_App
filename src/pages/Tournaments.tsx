@@ -115,7 +115,7 @@ export default function Tournaments() {
             </div>
             <div className="flex items-center justify-between">
               <div className="text-xs text-gray-500">
-                <span>{t.teams.length} teams</span> • <span>Fee: ₹{t.registrationFee}</span>
+                <span>{(t.teams || []).length} teams</span> • <span>Fee: ₹{t.registrationFee}</span>
               </div>
               <div className="flex items-center gap-2">
                 {currentUser?.role === 'admin' && (
@@ -134,8 +134,8 @@ export default function Tournaments() {
                   <button onClick={(e) => {
                     e.stopPropagation();
                     const myTeam = teams.find(tm => tm.ownerId === currentUser.id);
-                    if (myTeam && !t.teams.includes(myTeam.id)) {
-                      const sport = t.sports[0];
+                    if (myTeam && !(t.teams || []).includes(myTeam.id)) {
+                      const sport = (t.sports || [])[0];
                       if (sport) submitTeamEventRegistration(myTeam.id, t.id, sport);
                     }
                   }} className="text-xs px-3 py-1 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">

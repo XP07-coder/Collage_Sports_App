@@ -325,7 +325,7 @@ export const useStore = create<AppState>()(
         };
         set(state => ({
           eventRegistrations: [...state.eventRegistrations, newReg],
-          tournaments: state.tournaments.map(t => t.id === tournamentId ? { ...t, players: [...t.players, playerId] } : t),
+          tournaments: state.tournaments.map(t => t.id === tournamentId ? { ...t, players: [...(t.players || []), playerId] } : t),
         }));
         get().addNotification(playerId, 'Event Registration Submitted', `Your registration for ${tournament.name} (${sport}) has been submitted. Payment approval is pending.`);
         get().addAuditLog({ userId: playerId, userName: get().users.find(u => u.id === playerId)?.fullName || '', action: 'Submitted Event Registration', entityType: 'event_registration', entityId: newReg.id, oldValue: '', newValue: JSON.stringify({ tournament: tournament.name, sport, fee: tournament.registrationFee }) });
@@ -614,14 +614,22 @@ export const useStore = create<AppState>()(
         }
         if (persistedState.tournaments) {
           persistedState.tournaments = persistedState.tournaments.map((t: any) => {
+            let updated = { ...t };
+            
+            // Migrate sport to sports array
             if (t.sport && !t.sports) {
-              return { ...t, sports: t.sport ? [t.sport] : [], sport: undefined };
+              updated.sports = t.sport ? [t.sport] : [];
+              delete updated.sport;
             }
-            if (!t.sports) return { ...t, sports: [] };
+            if (!updated.sports) updated.sports = [];
+            
             // Add new fields if missing
-            if (t.registrationFee === undefined) return { ...t, registrationFee: 100, teamRegistrationFee: 0, registrationDeadline: '', players: t.players || [] };
-            if (!t.players) return { ...t, players: [] };
-            return t;
+            if (updated.registrationFee === undefined) updated.registrationFee = 100;
+            if (updated.teamRegistrationFee === undefined) updated.teamRegistrationFee = 0;
+            if (updated.registrationDeadline === undefined) updated.registrationDeadline = '';
+            if (!updated.players) updated.players = [];
+            
+            return updated;
           });
         }
         // Add new state fields if missing

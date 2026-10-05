@@ -41,7 +41,7 @@ export default function Export() {
       const tData = tournaments.map(t => ({
         Name: t.name, Sports: t.sports?.join(', '), Location: t.location, Status: t.status,
         'Start Date': t.startDate, 'End Date': t.endDate,
-        Teams: t.teams.length, 'Win Pts': t.pointsForWin, 'Draw Pts': t.pointsForDraw,
+        Teams: (t.teams || []).length, 'Win Pts': t.pointsForWin, 'Draw Pts': t.pointsForDraw,
         Created: t.createdAt,
       }));
       const ws = XLSX.utils.json_to_sheet(tData);

@@ -35,7 +35,7 @@ export default function PlayerDashboard() {
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <Trophy className="w-8 h-8 text-yellow-500 mb-2" />
-          <p className="text-2xl font-bold">{tournaments.filter(t => t.teams.includes(myTeam?.id || '')).length}</p>
+          <p className="text-2xl font-bold">{tournaments.filter(t => (t.teams || []).includes(myTeam?.id || '')).length}</p>
           <p className="text-xs text-gray-500">Tournaments</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">

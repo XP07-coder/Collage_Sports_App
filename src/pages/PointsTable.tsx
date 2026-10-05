@@ -8,7 +8,7 @@ export default function PointsTable() {
 
   const tournament = tournaments.find(t => t.id === selectedTournament);
   const tournamentMatches = matches.filter(m => m.tournamentId === selectedTournament && m.status === 'completed');
-  const tournamentTeams = teams.filter(t => tournament?.teams.includes(t.id));
+  const tournamentTeams = teams.filter(t => (tournament?.teams || []).includes(t.id));
 
   const pointsForWin = tournament?.pointsForWin || 3;
   const pointsForDraw = tournament?.pointsForDraw || 1;

@@ -6,7 +6,7 @@ export default function TeamOwnerDashboard() {
   const myTeam = teams.find(t => t.ownerId === currentUser?.id);
   const pendingRequests = joinRequests.filter(r => r.teamId === myTeam?.id && r.status === 'pending');
   const myMatches = matches.filter(m => m.teamA === myTeam?.id || m.teamB === myTeam?.id);
-  const myTournaments = tournaments.filter(t => t.teams.includes(myTeam?.id || ''));
+  const myTournaments = tournaments.filter(t => (t.teams || []).includes(myTeam?.id || ''));
 
   return (
     <div className="space-y-6">

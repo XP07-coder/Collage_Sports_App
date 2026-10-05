@@ -63,7 +63,7 @@ export default function Matches() {
             <select value={form.teamA} onChange={e => setForm({...form, teamA: e.target.value})}
               className="px-3 py-2 border border-gray-300 rounded-lg">
               <option value="">Team A *</option>
-              {form.tournamentId && tournaments.find(t => t.id === form.tournamentId)?.teams.map(tid => {
+              {form.tournamentId && (tournaments.find(t => t.id === form.tournamentId)?.teams || []).map(tid => {
                 const team = teams.find(t => t.id === tid);
                 return <option key={tid} value={tid}>{team?.name}</option>;
               })}
@@ -71,7 +71,7 @@ export default function Matches() {
             <select value={form.teamB} onChange={e => setForm({...form, teamB: e.target.value})}
               className="px-3 py-2 border border-gray-300 rounded-lg">
               <option value="">Team B *</option>
-              {form.tournamentId && tournaments.find(t => t.id === form.tournamentId)?.teams.map(tid => {
+              {form.tournamentId && (tournaments.find(t => t.id === form.tournamentId)?.teams || []).map(tid => {
                 const team = teams.find(t => t.id === tid);
                 return <option key={tid} value={tid}>{team?.name}</option>;
               })}

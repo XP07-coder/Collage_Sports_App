@@ -17,7 +17,7 @@ export default function TournamentDetail() {
     </div>
   );
 
-  const tTeams = teams.filter(t => tournament.teams.includes(t.id));
+  const tTeams = teams.filter(t => (tournament.teams || []).includes(t.id));
   const tMatches = matches.filter(m => m.tournamentId === tournament.id);
   const tRegistrations = eventRegistrations.filter(r => r.tournamentId === tournament.id);
   const liveMatches = tMatches.filter(m => m.status === 'live');
