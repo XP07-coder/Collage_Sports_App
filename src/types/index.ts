@@ -1,21 +1,9 @@
 export type Role = 'admin' | 'player' | 'team_owner' | 'referee' | 'spectator';
-
-// Game Categories
 export type GameCategory = 'TRADITIONAL_SPORT' | 'BOARD_GAME' | 'ONLINE_GAME' | 'BATTLE_ROYALE';
-
-// Game Formats
 export type GameFormat = 'SET_BASED' | 'POINT_BASED' | 'GOAL_BASED' | 'RUN_BASED' | 'WIN_DRAW_LOSS' | 'PLACEMENT_BASED' | 'PLACEMENT_AND_KILLS' | 'ROUND_BASED' | 'TIME_BASED' | 'CUSTOM';
-
-// Participation Type
 export type ParticipationType = 'INDIVIDUAL' | 'TEAM' | 'SQUAD' | 'BOTH';
-
-// Registration Fee Type
 export type RegistrationFeeType = 'PLAYER' | 'TEAM';
-
-// Payment Statuses
 export type PaymentStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'WAIVED' | 'REFUNDED';
-
-// Registration Statuses
 export type RegistrationStatus = 'DRAFT' | 'SUBMITTED' | 'PAYMENT_PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
 
 export interface User {
@@ -33,7 +21,7 @@ export interface User {
   dob: string;
   bio: string;
   avatar: string;
-  sports: string[]; // Game IDs
+  games: string[]; // Game IDs
   position: string;
   verified: boolean;
   active: boolean;
@@ -44,7 +32,7 @@ export interface Team {
   id: string;
   name: string;
   description: string;
-  sports: string[]; // Game IDs
+  games: string[]; // Game IDs
   college: string;
   ownerId: string;
   email: string;
@@ -63,7 +51,6 @@ export interface JoinRequest {
   createdAt: string;
 }
 
-// Game entity - replaces Sport
 export interface Game {
   id: string;
   name: string;
@@ -71,40 +58,30 @@ export interface Game {
   format: GameFormat;
   participationType: ParticipationType;
   description: string;
-  icon: string; // emoji or icon identifier
+  icon: string;
   isActive: boolean;
-  // Scoring configuration
-  scoringConfig: ScoringConfig;
+  scoringConfig: {
+    maxSets?: number;
+    pointsPerSet?: number;
+    periodsCount?: number;
+    periodDuration?: number;
+    oversCount?: number;
+    playersPerSide?: number;
+    killPoints?: number;
+    placementPoints?: Record<number, number>;
+    winPoints?: number;
+    drawPoints?: number;
+    lossPoints?: number;
+    customRules?: string;
+  };
   createdAt: string;
 }
 
-export interface ScoringConfig {
-  // For SET_BASED
-  maxSets?: number;
-  pointsPerSet?: number;
-  // For POINT_BASED / GOAL_BASED
-  periodsCount?: number;
-  periodDuration?: number; // minutes
-  // For RUN_BASED
-  oversCount?: number;
-  playersPerSide?: number;
-  // For PLACEMENT_AND_KILLS
-  killPoints?: number;
-  placementPoints?: Record<number, number>; // placement -> points
-  // For WIN_DRAW_LOSS
-  winPoints?: number;
-  drawPoints?: number;
-  lossPoints?: number;
-  // Custom
-  customRules?: string;
-}
-
-// Registration Fee - per tournament + game + type
 export interface RegistrationFee {
   id: string;
   tournamentId: string;
   gameId: string;
-  feeType: RegistrationFeeType; // PLAYER or TEAM
+  feeType: RegistrationFeeType;
   amount: number;
   isActive: boolean;
   createdAt: string;
@@ -116,7 +93,7 @@ export interface Tournament {
   id: string;
   name: string;
   description: string;
-  games: string[]; // Game IDs (was sports)
+  games: string[];
   startDate: string;
   endDate: string;
   registrationDeadline: string;
@@ -135,11 +112,11 @@ export interface EventRegistration {
   id: string;
   playerId: string;
   tournamentId: string;
-  gameId: string; // was sport
+  gameId: string;
   registrationType: 'PLAYER';
   registrationStatus: RegistrationStatus;
   paymentStatus: PaymentStatus;
-  registrationFee: number; // Historical fee at time of registration
+  registrationFee: number;
   amountPaid: number;
   paymentReference: string;
   paymentMethod: string;
@@ -158,11 +135,11 @@ export interface TeamEventRegistration {
   id: string;
   teamId: string;
   tournamentId: string;
-  gameId: string; // was sport
+  gameId: string;
   registrationType: 'TEAM';
   registrationStatus: RegistrationStatus;
   paymentStatus: PaymentStatus;
-  registrationFee: number; // Historical fee at time of registration
+  registrationFee: number;
   amountPaid: number;
   paymentReference: string;
   paymentMethod: string;
@@ -180,7 +157,7 @@ export interface TeamEventRegistration {
 export interface Match {
   id: string;
   tournamentId: string;
-  gameId: string; // was sport
+  gameId: string;
   teamA: string;
   teamB: string;
   venue: string;
@@ -189,8 +166,6 @@ export interface Match {
   status: 'scheduled' | 'live' | 'completed' | 'cancelled';
   sets: MatchSet[];
   winner: string | null;
-  // Battle Royale specific
-  battleRoyaleData?: BattleRoyaleMatchData;
   createdAt: string;
 }
 
@@ -199,22 +174,6 @@ export interface MatchSet {
   scoreA: number;
   scoreB: number;
   completed: boolean;
-}
-
-export interface BattleRoyaleMatchData {
-  roundNumber: number;
-  totalRounds: number;
-  participants: BattleRoyaleParticipant[];
-}
-
-export interface BattleRoyaleParticipant {
-  teamId: string;
-  placement: number;
-  kills: number;
-  placementPoints: number;
-  killPoints: number;
-  bonusPoints: number;
-  totalPoints: number;
 }
 
 export interface Auction {
@@ -264,9 +223,6 @@ export interface ChatMessage {
   tournamentId: string;
   timestamp: string;
 }
-
-// Keep Sport as alias for backward compatibility
-export type Sport = Game;
 
 export interface Venue {
   id: string;
