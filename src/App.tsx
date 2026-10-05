@@ -20,6 +20,12 @@ import AuditLogs from './pages/AuditLogs';
 import Chat from './pages/Chat';
 import Profile from './pages/Profile';
 import Notifications from './pages/Notifications';
+import PlayerDetail from './pages/PlayerDetail';
+import TeamDetail from './pages/TeamDetail';
+import TournamentDetail from './pages/TournamentDetail';
+import MatchDetail from './pages/MatchDetail';
+import EventRegistrations from './pages/EventRegistrations';
+import MyEvents from './pages/MyEvents';
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) {
   const currentUser = useStore(s => s.currentUser);
@@ -49,13 +55,19 @@ export default function App() {
         <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           <Route index element={<DashboardRouter />} />
           <Route path="tournaments" element={<ProtectedRoute><Tournaments /></ProtectedRoute>} />
+          <Route path="tournament/:id" element={<ProtectedRoute><TournamentDetail /></ProtectedRoute>} />
           <Route path="teams" element={<ProtectedRoute><Teams /></ProtectedRoute>} />
+          <Route path="team/:id" element={<ProtectedRoute><TeamDetail /></ProtectedRoute>} />
           <Route path="players" element={<ProtectedRoute><Players /></ProtectedRoute>} />
+          <Route path="player/:id" element={<ProtectedRoute><PlayerDetail /></ProtectedRoute>} />
           <Route path="matches" element={<ProtectedRoute><Matches /></ProtectedRoute>} />
+          <Route path="match/:id" element={<ProtectedRoute><MatchDetail /></ProtectedRoute>} />
           <Route path="live" element={<ProtectedRoute><LiveScoreboard /></ProtectedRoute>} />
           <Route path="leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
           <Route path="points" element={<ProtectedRoute><PointsTable /></ProtectedRoute>} />
           <Route path="auction" element={<ProtectedRoute><Auction /></ProtectedRoute>} />
+          <Route path="events" element={<ProtectedRoute><MyEvents /></ProtectedRoute>} />
+          <Route path="registrations" element={<ProtectedRoute allowedRoles={['admin']}><EventRegistrations /></ProtectedRoute>} />
           <Route path="export" element={<ProtectedRoute allowedRoles={['admin']}><Export /></ProtectedRoute>} />
           <Route path="audit" element={<ProtectedRoute allowedRoles={['admin']}><AuditLogs /></ProtectedRoute>} />
           <Route path="chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />

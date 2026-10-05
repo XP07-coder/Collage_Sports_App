@@ -1,12 +1,14 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store';
-import { UserCircle, Search, Shield, Mail } from 'lucide-react';
+import { UserCircle, Search, Shield, Mail, Eye } from 'lucide-react';
 
 export default function Players() {
   const { users, teams, currentUser } = useStore();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const players = users.filter(u => u.role === 'player');
-  const filtered = players.filter(p => p.fullName.toLowerCase().includes(search.toLowerCase()) || p.sport.toLowerCase().includes(search.toLowerCase()) || p.collegeId.toLowerCase().includes(search.toLowerCase()));
+  const filtered = players.filter(p => p.fullName.toLowerCase().includes(search.toLowerCase()) || p.sports?.some(s => s.toLowerCase().includes(search.toLowerCase())) || p.collegeId.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="space-y-6">
@@ -26,7 +28,7 @@ export default function Players() {
         {filtered.map(player => {
           const playerTeam = teams.find(t => t.members.includes(player.id));
           return (
-            <div key={player.id} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <div key={player.id} onClick={() => navigate(`/player/${player.id}`)} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-full flex items-center justify-center">
                   <span className="text-lg font-bold text-white">{player.fullName.charAt(0)}</span>
@@ -37,7 +39,7 @@ export default function Players() {
                 </div>
               </div>
               <div className="space-y-1 text-sm text-gray-600">
-                <p className="flex items-center gap-2"><Shield className="w-3 h-3" />{player.sport || 'Not specified'}</p>
+                <p className="flex items-center gap-2"><Shield className="w-3 h-3" />{player.sports?.join(', ') || 'Not specified'}</p>
                 <p className="flex items-center gap-2"><Mail className="w-3 h-3" />{player.email}</p>
                 <p className="text-xs text-gray-400">{player.course} {player.branch && `• ${player.branch}`} {player.year && `• ${player.year}`}</p>
               </div>

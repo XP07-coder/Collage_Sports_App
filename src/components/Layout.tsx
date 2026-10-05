@@ -24,12 +24,14 @@ export default function Layout() {
     { to: '/leaderboard', icon: BarChart3, label: 'Leaderboard' },
     { to: '/points', icon: Table, label: 'Points Table' },
     { to: '/auction', icon: Hammer, label: 'Auction' },
+    { to: '/events', icon: Trophy, label: 'My Events' },
     { to: '/chat', icon: MessageCircle, label: 'Chat' },
     { to: '/profile', icon: UserCircle, label: 'My Profile' },
     { to: '/notifications', icon: Bell, label: `Notifications${unreadCount > 0 ? ` (${unreadCount})` : ''}` },
   ];
 
   const adminItems = [
+    { to: '/registrations', icon: Shield, label: 'Registrations' },
     { to: '/export', icon: Download, label: 'Export Data' },
     { to: '/audit', icon: FileText, label: 'Audit Logs' },
   ];

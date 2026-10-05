@@ -1,8 +1,10 @@
+import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store';
-import { Users, Trophy, Calendar, Radio, Activity, Shield, UserCheck, AlertTriangle } from 'lucide-react';
+import { Users, Trophy, Calendar, Radio, Activity, Shield, UserCheck, AlertTriangle, CreditCard } from 'lucide-react';
 
 export default function AdminDashboard() {
-  const { users, teams, tournaments, matches, auditLogs, joinRequests } = useStore();
+  const { users, teams, tournaments, matches, auditLogs, joinRequests, eventRegistrations } = useStore();
+  const navigate = useNavigate();
   
   const stats = [
     { label: 'Total Users', value: users.length, icon: Users, color: 'bg-blue-500' },
@@ -62,7 +64,7 @@ export default function AdminDashboard() {
                 <div key={t.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div>
                     <p className="font-medium text-sm">{t.name}</p>
-                    <p className="text-xs text-gray-500">{t.sport} • {t.teams.length} teams</p>
+                    <p className="text-xs text-gray-500">{t.sports.join(', ')} • {t.teams.length} teams</p>
                   </div>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                     t.status === 'ongoing' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'

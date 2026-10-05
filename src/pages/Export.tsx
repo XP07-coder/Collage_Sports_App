@@ -19,7 +19,7 @@ export default function Export() {
       const players = users.filter(u => u.role === 'player').map(u => ({
         Name: u.fullName, Email: u.email, Phone: u.phone, 'College ID': u.collegeId,
         Course: u.course, Branch: u.branch, Year: u.year, Gender: u.gender,
-        Sport: u.sport, Position: u.position, Status: u.active ? 'Active' : 'Suspended',
+        Sports: u.sports?.join(', '), Position: u.position, Status: u.active ? 'Active' : 'Suspended',
         'Registered': u.createdAt,
       }));
       const ws = XLSX.utils.json_to_sheet(players);
@@ -28,7 +28,7 @@ export default function Export() {
 
     if (selectedData.teams) {
       const teamData = teams.map(t => ({
-        Name: t.name, Sport: t.sport, College: t.college, Email: t.email,
+        Name: t.name, Sports: t.sports?.join(', '), College: t.college, Email: t.email,
         Contact: t.contact, Members: t.members.length, Purse: t.purse,
         Owner: users.find(u => u.id === t.ownerId)?.fullName || 'N/A',
         Created: t.createdAt,
@@ -39,7 +39,7 @@ export default function Export() {
 
     if (selectedData.tournaments) {
       const tData = tournaments.map(t => ({
-        Name: t.name, Sport: t.sport, Location: t.location, Status: t.status,
+        Name: t.name, Sports: t.sports?.join(', '), Location: t.location, Status: t.status,
         'Start Date': t.startDate, 'End Date': t.endDate,
         Teams: t.teams.length, 'Win Pts': t.pointsForWin, 'Draw Pts': t.pointsForDraw,
         Created: t.createdAt,

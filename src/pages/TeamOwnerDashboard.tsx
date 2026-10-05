@@ -53,7 +53,7 @@ export default function TeamOwnerDashboard() {
               </div>
               <div>
                 <h3 className="text-xl font-bold">{myTeam.name}</h3>
-                <p className="text-sm text-gray-500">{myTeam.sport} • {myTeam.college}</p>
+                <p className="text-sm text-gray-500">{myTeam.sports?.join(', ')} • {myTeam.college}</p>
                 <p className="text-sm text-gray-500">Purse: ₹{myTeam.purse}</p>
                 <p className="text-xs text-gray-400 mt-1">{myTeam.description}</p>
               </div>
@@ -73,7 +73,7 @@ export default function TeamOwnerDashboard() {
                     <div key={req.id} className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
                       <div>
                         <p className="text-sm font-medium">{player?.fullName}</p>
-                        <p className="text-xs text-gray-500">{player?.sport} • {player?.collegeId}</p>
+                        <p className="text-xs text-gray-500">{player?.sports?.join(', ') || 'N/A'} • {player?.collegeId}</p>
                       </div>
                       <div className="flex gap-2">
                         <button onClick={() => useStore.getState().respondToJoinRequest(req.id, 'accepted')}

@@ -54,7 +54,7 @@ export default function Auction() {
             <select value={form.playerId} onChange={e => setForm({...form, playerId: e.target.value})}
               className="px-3 py-2 border border-gray-300 rounded-lg">
               <option value="">Select Player</option>
-              {players.map(p => <option key={p.id} value={p.id}>{p.fullName} ({p.sport})</option>)}
+              {players.map(p => <option key={p.id} value={p.id}>{p.fullName} ({p.sports?.join(', ')})</option>)}
             </select>
             <input type="number" placeholder="Base Price" value={form.basePrice} onChange={e => setForm({...form, basePrice: +e.target.value})}
               className="px-3 py-2 border border-gray-300 rounded-lg" />
@@ -83,7 +83,7 @@ export default function Auction() {
                   </div>
                   <div>
                     <h3 className="font-semibold">{player?.fullName}</h3>
-                    <p className="text-xs text-gray-500">{player?.sport} • Base: ₹{auction.basePrice}</p>
+                    <p className="text-xs text-gray-500">{player?.sports?.join(', ')} • Base: ₹{auction.basePrice}</p>
                   </div>
                 </div>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${

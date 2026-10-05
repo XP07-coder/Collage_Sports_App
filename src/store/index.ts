@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { User, Team, JoinRequest, Tournament, Match, Auction, Notification, AuditLog, ChatMessage, Sport, Venue } from '../types';
+import { User, Team, JoinRequest, Tournament, Match, Auction, Notification, AuditLog, ChatMessage, Sport, Venue, EventRegistration, TeamEventRegistration } from '../types';
 
 const generateId = () => Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
 
@@ -12,6 +12,8 @@ interface AppState {
   logout: () => void;
   register: (user: Partial<User>) => boolean;
   updateUser: (id: string, data: Partial<User>) => void;
+  suspendUser: (id: string) => void;
+  activateUser: (id: string) => void;
 
   // Teams
   teams: Team[];
@@ -28,7 +30,20 @@ interface AppState {
   tournaments: Tournament[];
   createTournament: (t: Partial<Tournament>) => void;
   updateTournament: (id: string, data: Partial<Tournament>) => void;
-  registerTeamForTournament: (tournamentId: string, teamId: string) => void;
+
+  // Event Registrations
+  eventRegistrations: EventRegistration[];
+  submitEventRegistration: (playerId: string, tournamentId: string, sport: string) => boolean;
+  approvePayment: (registrationId: string, adminId: string) => boolean;
+  rejectPayment: (registrationId: string, adminId: string) => void;
+  approveRegistration: (registrationId: string, adminId: string) => void;
+  rejectRegistration: (registrationId: string, adminId: string) => void;
+  isPlayerEligible: (playerId: string, tournamentId: string, sport: string) => boolean;
+
+  // Team Event Registrations
+  teamEventRegistrations: TeamEventRegistration[];
+  submitTeamEventRegistration: (teamId: string, tournamentId: string, sport: string) => boolean;
+  approveTeamPayment: (regId: string, adminId: string) => void;
 
   // Matches
   matches: Match[];
@@ -88,7 +103,7 @@ const defaultAdmin: User = {
   dob: '1990-01-01',
   bio: 'System Administrator',
   avatar: '',
-  sport: '',
+  sports: [],
   position: '',
   verified: true,
   active: true,
@@ -103,6 +118,8 @@ export const useStore = create<AppState>()(
       teams: [],
       joinRequests: [],
       tournaments: [],
+      eventRegistrations: [],
+      teamEventRegistrations: [],
       matches: [],
       auctions: [],
       notifications: [],
@@ -140,7 +157,7 @@ export const useStore = create<AppState>()(
           dob: userData.dob || '',
           bio: userData.bio || '',
           avatar: userData.avatar || '',
-          sport: userData.sport || '',
+          sports: userData.sports || [],
           position: userData.position || '',
           verified: true,
           active: true,
@@ -148,14 +165,34 @@ export const useStore = create<AppState>()(
         };
         set(state => ({ users: [...state.users, newUser] }));
         get().addAuditLog({ userId: newUser.id, userName: newUser.fullName, action: 'Registered', entityType: 'user', entityId: newUser.id, oldValue: '', newValue: JSON.stringify({ role: newUser.role }) });
-        get().addNotification(newUser.id, 'Welcome!', 'Your account has been created successfully.');
+        get().addNotification(newUser.id, 'Welcome!', 'Your account has been created successfully. Complete your profile and register for events.');
         return true;
       },
 
       updateUser: (id, data) => {
         set(state => ({
           users: state.users.map(u => u.id === id ? { ...u, ...data } : u),
-          currentUser: state.currentUser?.id === id ? { ...state.currentUser, ...data } : state.currentUser,
+          currentUser: state.currentUser?.id === id ? { ...state.currentUser, ...data } as User : state.currentUser,
+        }));
+        const user = get().users.find(u => u.id === id);
+        if (user) {
+          get().addAuditLog({ userId: id, userName: user.fullName, action: 'Updated Profile', entityType: 'user', entityId: id, oldValue: '', newValue: JSON.stringify(Object.keys(data)) });
+        }
+      },
+
+      suspendUser: (id) => {
+        set(state => ({
+          users: state.users.map(u => u.id === id ? { ...u, active: false } : u),
+        }));
+        const user = get().users.find(u => u.id === id);
+        if (user) {
+          get().addAuditLog({ userId: get().currentUser?.id || '', userName: get().currentUser?.fullName || '', action: 'Suspended User', entityType: 'user', entityId: id, oldValue: 'active', newValue: 'suspended' });
+        }
+      },
+
+      activateUser: (id) => {
+        set(state => ({
+          users: state.users.map(u => u.id === id ? { ...u, active: true } : u),
         }));
       },
 
@@ -166,7 +203,7 @@ export const useStore = create<AppState>()(
           id: generateId(),
           name: teamData.name || '',
           description: teamData.description || '',
-          sport: teamData.sport || '',
+          sports: teamData.sports || [],
           college: teamData.college || '',
           ownerId: teamData.ownerId || '',
           email: teamData.email || '',
@@ -182,7 +219,11 @@ export const useStore = create<AppState>()(
       },
 
       updateTeam: (id, data) => {
+        const team = get().teams.find(t => t.id === id);
         set(state => ({ teams: state.teams.map(t => t.id === id ? { ...t, ...data } : t) }));
+        if (team) {
+          get().addAuditLog({ userId: get().currentUser?.id || '', userName: get().currentUser?.fullName || '', action: 'Updated Team', entityType: 'team', entityId: id, oldValue: '', newValue: JSON.stringify(Object.keys(data)) });
+        }
       },
 
       deleteTeam: (id) => {
@@ -231,29 +272,166 @@ export const useStore = create<AppState>()(
           id: generateId(),
           name: tData.name || '',
           description: tData.description || '',
-          sport: tData.sport || '',
+          sports: tData.sports || [],
           startDate: tData.startDate || '',
           endDate: tData.endDate || '',
+          registrationDeadline: tData.registrationDeadline || '',
           location: tData.location || '',
           status: tData.status || 'draft',
           createdBy: tData.createdBy || '',
           teams: [],
+          players: [],
           pointsForWin: tData.pointsForWin || 3,
           pointsForDraw: tData.pointsForDraw || 1,
           pointsForLoss: tData.pointsForLoss || 0,
+          registrationFee: tData.registrationFee || 100,
+          teamRegistrationFee: tData.teamRegistrationFee || 0,
           createdAt: new Date().toISOString(),
         };
         set(state => ({ tournaments: [...state.tournaments, newTournament] }));
+        get().addAuditLog({ userId: tData.createdBy || '', userName: get().currentUser?.fullName || '', action: 'Created Tournament', entityType: 'tournament', entityId: newTournament.id, oldValue: '', newValue: newTournament.name });
       },
 
       updateTournament: (id, data) => {
         set(state => ({ tournaments: state.tournaments.map(t => t.id === id ? { ...t, ...data } : t) }));
       },
 
-      registerTeamForTournament: (tournamentId, teamId) => {
+      submitEventRegistration: (playerId, tournamentId, sport) => {
+        // Check for duplicate registration
+        const existing = get().eventRegistrations.find(
+          r => r.playerId === playerId && r.tournamentId === tournamentId && r.sport === sport && r.registrationStatus !== 'rejected' && r.registrationStatus !== 'cancelled'
+        );
+        if (existing) return false;
+
+        const tournament = get().tournaments.find(t => t.id === tournamentId);
+        if (!tournament) return false;
+
+        const now = new Date().toISOString();
+        const newReg: EventRegistration = {
+          id: generateId(),
+          playerId,
+          tournamentId,
+          sport,
+          registrationStatus: 'payment_pending',
+          paymentStatus: 'pending',
+          registrationFee: tournament.registrationFee,
+          submittedAt: now,
+          approvedAt: null,
+          approvedBy: null,
+          rejectedAt: null,
+          rejectedBy: null,
+          createdAt: now,
+          updatedAt: now,
+        };
         set(state => ({
-          tournaments: state.tournaments.map(t =>
-            t.id === tournamentId ? { ...t, teams: [...t.teams, teamId] } : t
+          eventRegistrations: [...state.eventRegistrations, newReg],
+          tournaments: state.tournaments.map(t => t.id === tournamentId ? { ...t, players: [...t.players, playerId] } : t),
+        }));
+        get().addNotification(playerId, 'Event Registration Submitted', `Your registration for ${tournament.name} (${sport}) has been submitted. Payment approval is pending.`);
+        get().addAuditLog({ userId: playerId, userName: get().users.find(u => u.id === playerId)?.fullName || '', action: 'Submitted Event Registration', entityType: 'event_registration', entityId: newReg.id, oldValue: '', newValue: JSON.stringify({ tournament: tournament.name, sport, fee: tournament.registrationFee }) });
+        return true;
+      },
+
+      approvePayment: (registrationId, adminId) => {
+        const reg = get().eventRegistrations.find(r => r.id === registrationId);
+        if (!reg) return false;
+        const now = new Date().toISOString();
+        set(state => ({
+          eventRegistrations: state.eventRegistrations.map(r =>
+            r.id === registrationId ? { ...r, paymentStatus: 'approved', registrationStatus: 'approved', approvedAt: now, approvedBy: adminId, updatedAt: now } : r
+          ),
+        }));
+        const player = get().users.find(u => u.id === reg.playerId);
+        const tournament = get().tournaments.find(t => t.id === reg.tournamentId);
+        get().addNotification(reg.playerId, 'Payment Approved! ✓', `Your registration fee for ${tournament?.name} (${reg.sport}) has been approved. You are now ELIGIBLE to participate!`);
+        get().addAuditLog({ userId: adminId, userName: get().currentUser?.fullName || '', action: 'Approved Payment', entityType: 'event_registration', entityId: registrationId, oldValue: `PENDING ₹${reg.registrationFee}`, newValue: `APPROVED` });
+        return true;
+      },
+
+      rejectPayment: (registrationId, adminId) => {
+        const reg = get().eventRegistrations.find(r => r.id === registrationId);
+        if (!reg) return;
+        const now = new Date().toISOString();
+        set(state => ({
+          eventRegistrations: state.eventRegistrations.map(r =>
+            r.id === registrationId ? { ...r, paymentStatus: 'rejected', registrationStatus: 'rejected', rejectedAt: now, rejectedBy: adminId, updatedAt: now } : r
+          ),
+        }));
+        const tournament = get().tournaments.find(t => t.id === reg.tournamentId);
+        get().addNotification(reg.playerId, 'Payment Rejected', `Your registration fee for ${tournament?.name} (${reg.sport}) has been rejected.`);
+        get().addAuditLog({ userId: adminId, userName: get().currentUser?.fullName || '', action: 'Rejected Payment', entityType: 'event_registration', entityId: registrationId, oldValue: `PENDING ₹${reg.registrationFee}`, newValue: `REJECTED` });
+      },
+
+      approveRegistration: (registrationId, adminId) => {
+        const reg = get().eventRegistrations.find(r => r.id === registrationId);
+        if (!reg) return;
+        const now = new Date().toISOString();
+        set(state => ({
+          eventRegistrations: state.eventRegistrations.map(r =>
+            r.id === registrationId ? { ...r, registrationStatus: 'approved', approvedAt: now, approvedBy: adminId, updatedAt: now } : r
+          ),
+        }));
+      },
+
+      rejectRegistration: (registrationId, adminId) => {
+        const reg = get().eventRegistrations.find(r => r.id === registrationId);
+        if (!reg) return;
+        const now = new Date().toISOString();
+        set(state => ({
+          eventRegistrations: state.eventRegistrations.map(r =>
+            r.id === registrationId ? { ...r, registrationStatus: 'rejected', rejectedAt: now, rejectedBy: adminId, updatedAt: now } : r
+          ),
+        }));
+      },
+
+      isPlayerEligible: (playerId, tournamentId, sport) => {
+        const player = get().users.find(u => u.id === playerId);
+        if (!player || !player.active) return false;
+        const reg = get().eventRegistrations.find(
+          r => r.playerId === playerId && r.tournamentId === tournamentId && r.sport === sport
+        );
+        if (!reg) return false;
+        if (reg.registrationStatus !== 'approved') return false;
+        if (reg.paymentStatus !== 'approved' && reg.registrationFee > 0) return false;
+        return true;
+      },
+
+      submitTeamEventRegistration: (teamId, tournamentId, sport) => {
+        const existing = get().teamEventRegistrations.find(
+          r => r.teamId === teamId && r.tournamentId === tournamentId && r.sport === sport && r.registrationStatus !== 'rejected' && r.registrationStatus !== 'cancelled'
+        );
+        if (existing) return false;
+
+        const tournament = get().tournaments.find(t => t.id === tournamentId);
+        if (!tournament) return false;
+
+        const now = new Date().toISOString();
+        const fee = tournament.teamRegistrationFee;
+        const newReg: TeamEventRegistration = {
+          id: generateId(),
+          teamId,
+          tournamentId,
+          sport,
+          registrationStatus: fee > 0 ? 'payment_pending' : 'approved',
+          paymentStatus: fee > 0 ? 'pending' : 'not_required',
+          registrationFee: fee,
+          submittedAt: now,
+          approvedAt: fee === 0 ? now : null,
+          approvedBy: fee === 0 ? 'system' : null,
+          createdAt: now,
+        };
+        set(state => ({
+          teamEventRegistrations: [...state.teamEventRegistrations, newReg],
+          tournaments: state.tournaments.map(t => t.id === tournamentId ? { ...t, teams: [...t.teams, teamId] } : t),
+        }));
+        return true;
+      },
+
+      approveTeamPayment: (regId, adminId) => {
+        const now = new Date().toISOString();
+        set(state => ({
+          teamEventRegistrations: state.teamEventRegistrations.map(r =>
+            r.id === regId ? { ...r, paymentStatus: 'approved' as const, registrationStatus: 'approved' as const, approvedAt: now, approvedBy: adminId } : r
           ),
         }));
       },
@@ -291,14 +469,12 @@ export const useStore = create<AppState>()(
           s.setNumber === setNumber ? { ...s, scoreA, scoreB, completed: scoreA >= pointsPerSet || scoreB >= pointsPerSet } : s
         );
 
-        // Add new set if current set is completed and not all sets used
         const completedSets = updatedSets.filter(s => s.completed).length;
         const setsNeededToWin = Math.ceil(maxSets / 2);
         if (completedSets >= updatedSets.length && completedSets < maxSets && completedSets < setsNeededToWin) {
           updatedSets.push({ setNumber: updatedSets.length + 1, scoreA: 0, scoreB: 0, completed: false });
         }
 
-        // Calculate winner
         const setsWonA = updatedSets.filter(s => s.completed && s.scoreA > s.scoreB).length;
         const setsWonB = updatedSets.filter(s => s.completed && s.scoreB > s.scoreA).length;
         let winner: string | null = null;

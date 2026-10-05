@@ -1,8 +1,10 @@
+import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store';
-import { User, Trophy, Calendar, Users, Bell } from 'lucide-react';
+import { User, Trophy, Calendar, Users, Bell, AlertTriangle, CheckCircle } from 'lucide-react';
 
 export default function PlayerDashboard() {
-  const { currentUser, teams, matches, tournaments, notifications } = useStore();
+  const { currentUser, teams, matches, tournaments, notifications, eventRegistrations } = useStore();
+  const navigate = useNavigate();
   const myTeam = teams.find(t => t.members.includes(currentUser?.id || ''));
   const myMatches = matches.filter(m => m.teamA === myTeam?.id || m.teamB === myTeam?.id);
   const upcomingMatches = myMatches.filter(m => m.status === 'scheduled' || m.status === 'live');
@@ -53,12 +55,45 @@ export default function PlayerDashboard() {
             </div>
             <div>
               <p className="font-semibold text-lg">{myTeam.name}</p>
-              <p className="text-sm text-gray-500">{myTeam.sport} • {myTeam.college}</p>
+              <p className="text-sm text-gray-500">{myTeam.sports?.join(', ')} • {myTeam.college}</p>
               <p className="text-xs text-gray-400">{myTeam.members.length} members</p>
             </div>
           </div>
         ) : (
           <p className="text-sm text-gray-500">You haven't joined a team yet. Browse teams and send a join request!</p>
+        )}
+      </div>
+
+      {/* My Event Registrations */}
+      <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold text-gray-800">My Events</h3>
+          <button onClick={() => navigate('/events')} className="text-xs text-indigo-600 hover:text-indigo-700">View All →</button>
+        </div>
+        {eventRegistrations.filter(r => r.playerId === currentUser?.id).length === 0 ? (
+          <p className="text-sm text-gray-500">No event registrations. <button onClick={() => navigate('/tournaments')} className="text-indigo-600 underline">Browse tournaments</button></p>
+        ) : (
+          <div className="space-y-2">
+            {eventRegistrations.filter(r => r.playerId === currentUser?.id).slice(0, 3).map(reg => {
+              const tournament = tournaments.find(t => t.id === reg.tournamentId);
+              const eligible = reg.registrationStatus === 'approved' && (reg.paymentStatus === 'approved' || reg.registrationFee === 0);
+              return (
+                <div key={reg.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="text-sm font-medium">{tournament?.name}</p>
+                    <p className="text-xs text-gray-500">{reg.sport} • ₹{reg.registrationFee}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {eligible ? (
+                      <span className="flex items-center gap-1 text-xs text-green-600"><CheckCircle className="w-3 h-3" /> Eligible</span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-xs text-yellow-600"><AlertTriangle className="w-3 h-3" /> Pending</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
 

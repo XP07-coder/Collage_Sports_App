@@ -53,7 +53,7 @@ export default function Register() {
       year: form.year,
       gender: form.gender,
       dob: form.dob,
-      sport: form.sport,
+      sports: form.sport ? [form.sport] : [],
       position: form.position,
       bio: form.bio,
       role: form.role,
@@ -190,13 +190,26 @@ export default function Register() {
                 <input type="date" name="dob" value={form.dob} onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Sport</label>
-                <select name="sport" value={form.sport} onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                  <option value="">Select Sport</option>
-                  {sports.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
-                </select>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Select Sports (you can play multiple)</label>
+                <div className="flex flex-wrap gap-2">
+                  {sports.map(s => (
+                    <button key={s.id} type="button"
+                      onClick={() => {
+                        const current = form.sport;
+                        const sportsArr = current ? current.split(',').map(x => x.trim()).filter(Boolean) : [];
+                        const newArr = sportsArr.includes(s.name) ? sportsArr.filter(x => x !== s.name) : [...sportsArr, s.name];
+                        setForm({ ...form, sport: newArr.join(',') });
+                      }}
+                      className={`px-3 py-1 rounded-full text-sm border-2 transition-all ${
+                        (form.sport || '').split(',').map(x => x.trim()).includes(s.name)
+                          ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                      }`}>
+                      {(form.sport || '').split(',').map(x => x.trim()).includes(s.name) ? '✓ ' : ''}{s.name}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Position</label>

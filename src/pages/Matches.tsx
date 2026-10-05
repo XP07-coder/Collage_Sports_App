@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store';
 import { Calendar, Plus, Search, Play, CheckCircle, XCircle } from 'lucide-react';
 
 export default function Matches() {
+  const navigate = useNavigate();
   const { matches, teams, tournaments, users, currentUser, createMatch, updateMatch, updateMatchScore, sports } = useStore();
   const [showCreate, setShowCreate] = useState(false);
   const [search, setSearch] = useState('');
@@ -19,7 +21,7 @@ export default function Matches() {
   const handleCreate = () => {
     if (!form.tournamentId || !form.teamA || !form.teamB) return;
     const tournament = tournaments.find(t => t.id === form.tournamentId);
-    createMatch({ ...form, sport: tournament?.sport || '', status: 'scheduled' });
+    createMatch({ ...form, sport: tournament?.sports?.[0] || '', status: 'scheduled' });
     setShowCreate(false);
     setForm({ tournamentId: '', teamA: '', teamB: '', venue: '', scheduledDate: '', refereeId: '' });
   };
@@ -99,7 +101,7 @@ export default function Matches() {
           const tournament = tournaments.find(t => t.id === match.tournamentId);
           const referee = users.find(u => u.id === match.refereeId);
           return (
-            <div key={match.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div key={match.id} onClick={() => navigate(`/match/${match.id}`)} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-gray-400">{tournament?.name} • {match.sport}</span>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${

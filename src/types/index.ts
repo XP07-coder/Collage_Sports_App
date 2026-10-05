@@ -15,7 +15,7 @@ export interface User {
   dob: string;
   bio: string;
   avatar: string;
-  sport: string;
+  sports: string[]; // Multi-sport support
   position: string;
   verified: boolean;
   active: boolean;
@@ -26,7 +26,7 @@ export interface Team {
   id: string;
   name: string;
   description: string;
-  sport: string;
+  sports: string[]; // Multi-sport support
   college: string;
   ownerId: string;
   email: string;
@@ -49,16 +49,51 @@ export interface Tournament {
   id: string;
   name: string;
   description: string;
-  sport: string;
+  sports: string[]; // Multi-sport support
   startDate: string;
   endDate: string;
+  registrationDeadline: string;
   location: string;
   status: 'draft' | 'registration_open' | 'registration_closed' | 'ongoing' | 'completed' | 'cancelled' | 'archived';
   createdBy: string;
   teams: string[];
+  players: string[]; // registered player IDs
   pointsForWin: number;
   pointsForDraw: number;
   pointsForLoss: number;
+  registrationFee: number;
+  teamRegistrationFee: number;
+  createdAt: string;
+}
+
+export interface EventRegistration {
+  id: string;
+  playerId: string;
+  tournamentId: string;
+  sport: string;
+  registrationStatus: 'draft' | 'submitted' | 'payment_pending' | 'approved' | 'rejected' | 'cancelled';
+  paymentStatus: 'pending' | 'approved' | 'rejected' | 'waived' | 'refunded';
+  registrationFee: number;
+  submittedAt: string;
+  approvedAt: string | null;
+  approvedBy: string | null;
+  rejectedAt: string | null;
+  rejectedBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TeamEventRegistration {
+  id: string;
+  teamId: string;
+  tournamentId: string;
+  sport: string;
+  registrationStatus: 'submitted' | 'payment_pending' | 'approved' | 'rejected' | 'cancelled';
+  paymentStatus: 'pending' | 'approved' | 'rejected' | 'waived' | 'not_required';
+  registrationFee: number;
+  submittedAt: string;
+  approvedAt: string | null;
+  approvedBy: string | null;
   createdAt: string;
 }
 
