@@ -102,7 +102,7 @@ export default function TeamDetail() {
                 </div>
                 <p className="text-sm text-gray-500 mt-1">Team ID: {team.id.slice(0, 8).toUpperCase()}</p>
                 <div className="flex flex-wrap gap-2 mt-3 justify-center md:justify-start">
-                  {team.sports.map(s => (
+                  {(team.sports || []).map(s => (
                     <span key={s} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">✓ {s}</span>
                   ))}
                 </div>

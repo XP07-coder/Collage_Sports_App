@@ -592,6 +592,44 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'campus-sports-storage',
+      migrate: (persistedState: any, version: number) => {
+        // Migration: convert old 'sport: string' to 'sports: string[]'
+        if (persistedState.users) {
+          persistedState.users = persistedState.users.map((u: any) => {
+            if (u.sport && !u.sports) {
+              return { ...u, sports: u.sport ? [u.sport] : [], sport: undefined };
+            }
+            if (!u.sports) return { ...u, sports: [] };
+            return u;
+          });
+        }
+        if (persistedState.teams) {
+          persistedState.teams = persistedState.teams.map((t: any) => {
+            if (t.sport && !t.sports) {
+              return { ...t, sports: t.sport ? [t.sport] : [], sport: undefined };
+            }
+            if (!t.sports) return { ...t, sports: [] };
+            return t;
+          });
+        }
+        if (persistedState.tournaments) {
+          persistedState.tournaments = persistedState.tournaments.map((t: any) => {
+            if (t.sport && !t.sports) {
+              return { ...t, sports: t.sport ? [t.sport] : [], sport: undefined };
+            }
+            if (!t.sports) return { ...t, sports: [] };
+            // Add new fields if missing
+            if (t.registrationFee === undefined) return { ...t, registrationFee: 100, teamRegistrationFee: 0, registrationDeadline: '', players: t.players || [] };
+            if (!t.players) return { ...t, players: [] };
+            return t;
+          });
+        }
+        // Add new state fields if missing
+        if (!persistedState.eventRegistrations) persistedState.eventRegistrations = [];
+        if (!persistedState.teamEventRegistrations) persistedState.teamEventRegistrations = [];
+        return persistedState;
+      },
+      version: 2,
     }
   )
 );

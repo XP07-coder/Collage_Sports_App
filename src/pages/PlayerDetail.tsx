@@ -47,7 +47,7 @@ export default function PlayerDetail() {
             <h1 className="text-2xl font-bold text-gray-800">{player.fullName}</h1>
             <p className="text-sm text-gray-500 mt-1">Player ID: {player.id.slice(0, 8).toUpperCase()}</p>
             <div className="flex flex-wrap gap-2 mt-3 justify-center md:justify-start">
-              {player.sports.map(s => (
+              {(player.sports || []).map(s => (
                 <span key={s} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">✓ {s}</span>
               ))}
             </div>
@@ -113,7 +113,7 @@ export default function PlayerDetail() {
                 </div>
                 <div>
                   <p className="font-medium text-sm">{team.name}</p>
-                  <p className="text-xs text-gray-500">{team.sports.join(', ')}</p>
+                  <p className="text-xs text-gray-500">{(team.sports || []).join(', ')}</p>
                 </div>
               </div>
             ))}

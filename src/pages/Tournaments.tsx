@@ -10,7 +10,7 @@ export default function Tournaments() {
   const [search, setSearch] = useState('');
   const [form, setForm] = useState({ name: '', description: '', sports: [] as string[], startDate: '', endDate: '', registrationDeadline: '', location: '', pointsForWin: 3, pointsForDraw: 1, pointsForLoss: 0, registrationFee: 100, teamRegistrationFee: 0 });
 
-  const filtered = tournaments.filter(t => t.name.toLowerCase().includes(search.toLowerCase()) || t.sports.some(s => s.toLowerCase().includes(search.toLowerCase())));
+  const filtered = tournaments.filter(t => t.name.toLowerCase().includes(search.toLowerCase()) || (t.sports || []).some(s => s.toLowerCase().includes(search.toLowerCase())));
 
   const handleCreate = () => {
     if (!form.name || form.sports.length === 0) return;
@@ -102,7 +102,7 @@ export default function Tournaments() {
             <div className="flex items-start justify-between mb-3">
               <div>
                 <h3 className="font-semibold text-lg">{t.name}</h3>
-                <p className="text-sm text-gray-500">{t.sports.join(', ')}</p>
+                <p className="text-sm text-gray-500">{(t.sports || []).join(', ')}</p>
               </div>
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[t.status] || 'bg-gray-100'}`}>
                 {t.status.replace('_', ' ')}

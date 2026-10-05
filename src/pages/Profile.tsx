@@ -124,7 +124,7 @@ export default function Profile() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Sports (comma-separated)</label>
-            <input type="text" value={form.sports.join(', ')} onChange={e => setForm({...form, sports: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})}
+            <input type="text" value={(form.sports || []).join(', ')} onChange={e => setForm({...form, sports: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})}
               disabled={!editing}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg disabled:bg-gray-50 disabled:text-gray-500" placeholder="e.g., Badminton, Table Tennis" />
           </div>

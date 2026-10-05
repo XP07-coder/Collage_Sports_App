@@ -10,7 +10,7 @@ export default function Teams() {
   const [search, setSearch] = useState('');
   const [form, setForm] = useState({ name: '', description: '', sports: [] as string[], college: '', email: '', contact: '' });
 
-  const filtered = teams.filter(t => t.name.toLowerCase().includes(search.toLowerCase()) || t.sports.some(s => s.toLowerCase().includes(search.toLowerCase())));
+  const filtered = teams.filter(t => t.name.toLowerCase().includes(search.toLowerCase()) || (t.sports || []).some(s => s.toLowerCase().includes(search.toLowerCase())));
 
   const handleCreate = () => {
     if (!form.name || form.sports.length === 0) return;
@@ -99,7 +99,7 @@ export default function Teams() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">{team.name}</h3>
-                  <p className="text-sm text-gray-500">{team.sports.join(', ')}</p>
+                  <p className="text-sm text-gray-500">{(team.sports || []).join(', ')}</p>
                 </div>
               </div>
               <p className="text-sm text-gray-600 mb-3 line-clamp-2">{team.description}</p>

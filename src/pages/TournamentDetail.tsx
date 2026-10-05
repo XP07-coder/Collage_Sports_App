@@ -44,7 +44,7 @@ export default function TournamentDetail() {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">{tournament.name}</h1>
-            <p className="text-indigo-200 mt-1">{tournament.sports.join(', ')}</p>
+            <p className="text-indigo-200 mt-1">{(tournament.sports || []).join(', ')}</p>
             <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-indigo-200">
               <span className="flex items-center gap-1"><Calendar className="w-4 h-4" />{tournament.startDate} → {tournament.endDate}</span>
               <span className="flex items-center gap-1"><MapPin className="w-4 h-4" />{tournament.location || 'TBD'}</span>
@@ -116,7 +116,7 @@ export default function TournamentDetail() {
             <div className="bg-white rounded-xl p-5 shadow-sm border">
               <h3 className="font-semibold mb-3">Register for this Tournament</h3>
               <div className="space-y-2">
-                {tournament.sports.map(sport => (
+                {(tournament.sports || []).map(sport => (
                   <div key={sport} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div>
                       <p className="font-medium text-sm">{sport}</p>
@@ -151,7 +151,7 @@ export default function TournamentDetail() {
                 </div>
                 <div>
                   <p className="font-semibold">{team.name}</p>
-                  <p className="text-xs text-gray-500">{team.sports.join(', ')} • {team.members.length} members</p>
+                  <p className="text-xs text-gray-500">{(team.sports || []).join(', ')} • {team.members.length} members</p>
                 </div>
               </div>
             </div>

@@ -53,7 +53,7 @@ export default function Register() {
       year: form.year,
       gender: form.gender,
       dob: form.dob,
-      sports: form.sport ? [form.sport] : [],
+      sports: form.sport ? form.sport.split(',').map(s => s.trim()).filter(Boolean) : [],
       position: form.position,
       bio: form.bio,
       role: form.role,
